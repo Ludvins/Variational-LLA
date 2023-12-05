@@ -71,6 +71,6 @@ ResNet options: Resnet20, ResNet32, ResNet44 and ResNet56
 
 ```python
 python ./scripts/multiclass_resnet/valla_backpack.py --verbose --batch_size 100 --dataset CIFAR10
- --MAP_iterations 50000 --iterations 40000 --split 0 --resnet resnet18 --num_inducing 100
+ --MAP_iterations 50000 --iterations 40000 --split 0 --resnet resnet20 --num_inducing 100
 --weight_decay 0.001 --bb_alpha 1 --seed 0 --test_ood --test_corruptions --MAP_lr 0.01 --device gpu
 ```
