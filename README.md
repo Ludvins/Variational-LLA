@@ -67,7 +67,7 @@ python ./scripts/multiclass/valla.py --verbose --dataset MNIST --MAP_iterations 
 
 ## ResNet
 
-ResNet options: Resnet18, ResNet32, ResNet44 and ResNet56
+ResNet options: Resnet20, ResNet32, ResNet44 and ResNet56
 
 ```python
 python ./scripts/multiclass_resnet/valla_backpack.py --verbose --batch_size 100 --dataset CIFAR10
