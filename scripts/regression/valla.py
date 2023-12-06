@@ -14,11 +14,15 @@ from utils.pytorch_learning import fit_map, fit, score
 from src.valla import VaLLARegression
 from utils.models import get_mlp, create_ad_hoc_mlp
 from utils.metrics import Regression
+from utils.dataset import get_dataset
+
+
 args = manage_experiment_configuration()
 
 torch.manual_seed(args.seed)
+dataset = get_dataset(args.dataset_name)
 
-train_dataset, val_dataset, test_dataset = args.dataset.get_split(
+train_dataset, val_dataset, test_dataset = dataset.get_split(
     args.test_size, args.seed + args.split
 )
 
@@ -29,8 +33,8 @@ test_loader = DataLoader(test_dataset, batch_size=args.batch_size)
 
 
 f = get_mlp(
-    args.dataset.input_dim,
-    args.dataset.output_dim,
+    dataset.input_dim,
+    dataset.output_dim,
     args.net_structure,
     args.activation,
     device=args.device,

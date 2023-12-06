@@ -21,7 +21,6 @@ class Metrics:
         device : torch device
                  Device in which to make the computations.
         """
-
         self.num_data = num_data
         self.device = device
         self.reset()
