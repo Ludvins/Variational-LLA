@@ -1,8 +1,7 @@
 import torch
-
 from backpack import backpack, extend, memory_cleanup
-from backpack.extensions import BatchGrad
 from backpack.context import CTX
+from backpack.extensions import BatchGrad
 from laplace.curvature import CurvatureInterface
 
 
@@ -46,7 +45,7 @@ class BackPackInterface(CurvatureInterface):
                 # Reset gradients
                 model.zero_grad()
                 # Compute output
-                out = model(x)  
+                out = model(x)
 
                 # Use Backpack Gradbatch to retain independent gradients for each input.
                 with backpack(BatchGrad()):
@@ -72,7 +71,7 @@ class BackPackInterface(CurvatureInterface):
                     to_stack = Jk.unsqueeze(0)
                 else:
                     to_stack = torch.cat([to_stack, Jk.unsqueeze(0)], 0)
-                #to_stack.append(Jk)
+                # to_stack.append(Jk)
 
         # Clean model gradients
         model.zero_grad()
@@ -82,10 +81,9 @@ class BackPackInterface(CurvatureInterface):
         CTX.remove_hooks()
         # Clean extended model
         _cleanup(model)
-
         # Return Jacobians
         if self.output_size > 1:
-            return torch.stack(to_stack, dim=2).transpose(1, 2)
+            return to_stack.permute(1, 0, 2)
         else:
             return Jk.unsqueeze(-1).transpose(1, 2)
 
