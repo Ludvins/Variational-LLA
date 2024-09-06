@@ -249,8 +249,11 @@ class BaseVaLLA(torch.nn.Module):
         Kz = torch.exp(self.log_prior_std) ** 2 * Kz
         F_mean = self.net(X)
         return F_mean, Kx_diag, Kxz, Kz
+    
+    def compute_kernels_joint(self, X):
+        raise NotImplementedError
 
-    def predict_f(self, X):
+    def predict_f(self, X, joint = False):
         """
         Performs the mean and covariance matrix of the given input.
 
@@ -273,17 +276,23 @@ class BaseVaLLA(torch.nn.Module):
         li, lj = torch.tril_indices(self.num_inducing, self.num_inducing)
         # Shape (num_inducing, num_inducing)
         L[li, lj] = self.L
-
-        F_mean, Kx_diag, Kxz, Kz = self.compute_kernels(X)
+        
+        if joint:
+            F_mean, Kx, Kxz, Kz = self.compute_kernels_joint(X)
+        else:
+            F_mean, Kx, Kxz, Kz = self.compute_kernels(X)
         self.Kz = Kz
         self.compute_inducing_term(Kz)
 
         # Compute predictive diagonal
         # Shape [output_dim, output_dim, batch_size, batch_size]
         # K2 = Kxz @ A @ Kxz^T
-        diag = torch.einsum("nma, ml, nlb -> nab", Kxz, self.A, Kxz)
+        if joint:
+            K2 = torch.einsum("nma, ml, plb -> npab", Kxz, self.A, Kxz)
+        else:
+            K2 = torch.einsum("nma, ml, nlb -> nab", Kxz, self.A, Kxz)
         # Shape [batch_size, output_dim, output_dim]
-        Fvar = Kx_diag - diag
+        Fvar = Kx - K2
         return F_mean, Fvar
 
     def forward(self, X):
@@ -656,3 +665,23 @@ class VaLLAMultiClassBackend(VaLLAMultiClass):
         F_mean = self.net(X)
 
         return F_mean, Kx_diag, Kxz, Kzz
+
+
+    def compute_kernels_joint(self, X):
+        Jx = self.backpack.jacobians(X, enable_back_prop=False)
+        Jz = self.backpack.jacobians_on_outputs(
+            self.inducing_locations,
+            self.inducing_class.unsqueeze(-1),
+            enable_back_prop=self.training,
+        ).squeeze(1)
+
+        Kx = torch.exp(self.log_prior_std) ** 2 * torch.einsum(
+            "nai, mbi -> nmab", Jx, Jx
+        )
+        Kxz = torch.exp(self.log_prior_std) ** 2 * torch.einsum(
+            "nai, mi -> nma", Jx, Jz
+        )
+        Kzz = torch.exp(self.log_prior_std) ** 2 * torch.einsum("ni, mi -> nm", Jz, Jz)
+        F_mean = self.net(X)
+
+        return F_mean, Kx, Kxz, Kzz
