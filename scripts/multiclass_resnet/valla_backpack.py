@@ -13,7 +13,6 @@ sys.path.append(".")
 
 from utils.process_flags import manage_experiment_configuration
 from utils.pytorch_learning import fit_map_crossentropy, fit, forward, score
-from scripts.filename import create_file_name
 from src.valla import VaLLAMultiClassBackend
 from utils.models import get_resnet
 from utils.dataset import get_dataset
@@ -73,6 +72,14 @@ valla = VaLLAMultiClassBackend(
 
 
 opt = torch.optim.Adam(valla.parameters(recurse=False), lr=args.lr)
+
+# Take a batch of data
+x, y = next(iter(train_loader))
+x = x.to(args.device).to(args.dtype)
+mean, var = valla.predict_f(x)
+print(mean.shape, var.shape)
+mean, var = valla.predict_f(x, joint=True) 
+print(mean.shape, var.shape)
 
 start = timer()
 loss, val_loss = fit(
